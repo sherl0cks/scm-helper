@@ -2,7 +2,6 @@ package com.rhc;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -18,7 +17,7 @@ public class HttpAdapter extends AbstractVerticle {
     public void start(Future<Void> future) {
         Router router = Router.router(vertx);
 
-        // TODO possible we need to update these routes to have parametes in the path e.g. target namespace and buildconfigname
+        // TODO possible we need to update these routes to have parameters in the path e.g. target namespace and buildconfigname
         router.post("/").handler(BodyHandler.create());
         router.post("/").handler(this::loggingHandler);
         router.post("/").handler(this::onPost);
