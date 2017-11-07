@@ -7,13 +7,14 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.WebClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 
+import java.util.Map;
+
+
 @RunWith(VertxUnitRunner.class)
-public class RESTEndpointTest {
+public class HttpAdapterTest {
 
     private Vertx vertx;
     private WebClient client;
@@ -35,13 +36,16 @@ public class RESTEndpointTest {
         vertx.close(context.asyncAssertSuccess());
     }
 
+    /**
+     *
+     * This tests from the http layer. Not sure if this will remain helpful, but if so...
+     */
     @Test
-    public void shouldReceivePost(TestContext context) {
+    public void shouldRecieveWebhookAndSendTheProperCommandToTheAdapter(TestContext context) {
 
         // given
         async = context.async();
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.put("foo", "bar");
+        JsonObject jsonObject = ObjectMother.mergeRequestWebhook();
 
         // when
         client.post(8080, "localhost", "/")
@@ -54,11 +58,15 @@ public class RESTEndpointTest {
         this.testContext = context;
     }
 
+    /**
+     *
+     * .. you'll need to update these assertion
+     */
     public void handleEvent(Message message){
         // then
-        JsonObject object = new JsonObject();
-        object.put("foo", "bar");
-        testContext.assertEquals(object, message.body());
+        JsonObject object = ObjectMother.commandFromMergeRequestWebhook();
+
+        Assert.assertEquals(object, message.body());
 
         async.complete();
     }

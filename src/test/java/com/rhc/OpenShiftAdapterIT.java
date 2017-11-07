@@ -1,35 +1,19 @@
 package com.rhc;
 
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.openshift.api.model.Build;
 import io.fabric8.openshift.api.model.BuildConfig;
 import io.fabric8.openshift.api.model.Project;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * This test requires an openshift login on the local machine, or the following system properties / env vars set:
- * <p>
- * kubernetes.master / KUBERNETES_MASTER
- * <p>
- * and for auth, either of the combinations below:
- * <p>
- * kubernetes.auth.basic.username / KUBERNETES_AUTH_BASIC_USERNAME
- * kubernetes.auth.basic.password / KUBERNETES_AUTH_BASIC_PASSWORD
- * <p>
- * or
- * <p>
- * kubernetes.auth.token / KUBERNETES_AUTH_TOKEN
- * <p>
- * <p>
- * <p>
- * for more info see https://github.com/fabric8io/kubernetes-client
- */
+
 @RunWith(JUnit4.class)
 public class OpenShiftAdapterIT {
 
@@ -57,20 +41,20 @@ public class OpenShiftAdapterIT {
 
 
         // when
-        BuildConfig result = adapter.updateBuildConfigGitRef(openShiftProjectName, "java-app-pipeline", "dev-demo");
+        BuildConfig result = adapter.updateBuildConfigGitRef(openShiftProjectName, "java-app-pipeline", "https://github.com/sherl0cks/automation-api","dev-demo");
 
 
         // then
         Assert.assertNotNull(result);
         Assert.assertEquals("dev-demo", result.getSpec().getSource().getGit().getRef());
+        Assert.assertEquals("https://github.com/sherl0cks/automation-api", result.getSpec().getSource().getGit().getUri());
 
     }
 
     @Test
-    public void shouldTriggerBuild(){
+    public void shouldTriggerBuildWithNoEnvVars(){
         // given
         BuildConfig buildConfig = adapter.createBuildConfigIfItDoesNotExist(openShiftProjectName,"java-app-pipeline", "https://github.com/rht-labs/automation-api", "master", "Jenkinsfile");
-        Assert.assertEquals("master", buildConfig.getSpec().getSource().getGit().getRef());
 
         // when
         Build build = adapter.triggerBuild(openShiftProjectName, "java-app-pipeline");
@@ -78,6 +62,27 @@ public class OpenShiftAdapterIT {
         // then
         Assert.assertNotNull(build);
         Assert.assertEquals("New", build.getStatus().getPhase() );
+        Assert.assertEquals(0, build.getSpec().getStrategy().getJenkinsPipelineStrategy().getEnv().size());
+    }
+
+
+    @Test
+    public void shouldTriggerBuildWithEnvVars(){
+        // given
+        BuildConfig buildConfig = adapter.createBuildConfigIfItDoesNotExist(openShiftProjectName,"java-app-pipeline", "https://github.com/rht-labs/automation-api", "master", "Jenkinsfile");
+
+        Map<String,String> envVars = new HashMap<>();
+        envVars.put("foo", "bar");
+        envVars.put("calvin", "hobbes");
+
+        // when
+        Build build = adapter.triggerBuild(openShiftProjectName, "java-app-pipeline", envVars);
+
+        // then
+        Assert.assertNotNull(build);
+        Assert.assertEquals("New", build.getStatus().getPhase() );
+        List<EnvVar> envVarList = build.getSpec().getStrategy().getJenkinsPipelineStrategy().getEnv();
+        Assert.assertEquals(2, envVarList.size());
     }
 
 }

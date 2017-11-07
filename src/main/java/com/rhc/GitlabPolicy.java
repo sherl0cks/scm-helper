@@ -1,16 +1,25 @@
 package com.rhc;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
-public class GitlabPolicy extends AbstractVerticle {
+import java.util.HashMap;
+import java.util.Map;
 
-    private static final Logger LOG = LoggerFactory.getLogger(GitlabPolicy.class);
+public class GitlabPolicy {
 
-    @Override
-    public void start(Future<Void> future) {
-        future.complete();
+
+    public static JsonObject translateMergeRequestWebhook(JsonObject webhook) {
+        JsonObject command = new JsonObject(webhook.toString());
+        command.put("triggerBuild", true);
+
+        Map<String,String> envVars = new HashMap<>();
+        envVars.put("foo", "bar");
+        envVars.put("calvin", "hobbes");
+        command.put("envVars", envVars);
+
+        command.put("envVars", envVars);
+
+        return command;
     }
 }
